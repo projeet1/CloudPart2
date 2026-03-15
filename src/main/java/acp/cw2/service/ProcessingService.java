@@ -8,7 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-
+import acp.cw2.dto.SplitterMessage;
+import acp.cw2.dto.SplitterRequest;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -104,6 +105,49 @@ public class ProcessingService {
 
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to process transformMessages payload", e);
+            }
+        }
+    }
+
+    public void splitter(SplitterRequest request) {
+        rabbitMqService.ensureQueueForExternalUse(request.getReadQueue());
+
+        for (int i = 0; i < request.getMessageCount(); i++) {
+            Message rawMessage = rabbitTemplate.receive(request.getReadQueue());
+
+            if (rawMessage == null) {
+                throw new RuntimeException("Expected " + request.getMessageCount()
+                        + " messages but queue ran empty after " + i);
+            }
+
+            try {
+                String body = new String(rawMessage.getBody(), StandardCharsets.UTF_8);
+                SplitterMessage message = objectMapper.readValue(body, SplitterMessage.class);
+
+                boolean isEven = message.getId() % 2 == 0;
+
+                String redisHash = isEven ? request.getRedisHashEven() : request.getRedisHashOdd();
+                String countKey = isEven ? "count_even" : "count_odd";
+                String sumKey = isEven ? "sum_even" : "sum_odd";
+                String avgKey = isEven ? "average_even" : "average_odd";
+
+                redisStateService.putJsonInHash(redisHash, message.getId(), body);
+
+                long count = redisStateService.getLongValue(countKey);
+                double sum = redisStateService.getDoubleValue(sumKey);
+
+                count += 1;
+                sum += message.getValue();
+
+                double average = sum / count;
+                double roundedAverage = Math.round(average * 100.0) / 100.0;
+
+                redisStateService.setLongValue(countKey, count);
+                redisStateService.setDoubleValue(sumKey, sum);
+                redisStateService.setDoubleValue(avgKey, roundedAverage);
+
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to process splitter payload", e);
             }
         }
     }

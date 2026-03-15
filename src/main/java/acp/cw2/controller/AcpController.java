@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import acp.cw2.dto.SortedMessage;
 import java.util.List;
 import acp.cw2.dto.SortedMessage;
+import acp.cw2.dto.SplitterRequest;
 import acp.cw2.dto.TransformRequest;
 @RestController
 @RequestMapping("/api/v1/acp")
@@ -78,6 +79,12 @@ public class AcpController {
     @PostMapping("/transformMessages")
     public ResponseEntity<Void> transformMessages(@RequestBody TransformRequest request) {
         processingService.transformMessages(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/splitter")
+    public ResponseEntity<Void> splitter(@RequestBody SplitterRequest request) {
+        processingService.splitter(request);
         return ResponseEntity.ok().build();
     }
 

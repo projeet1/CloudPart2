@@ -35,4 +35,26 @@ public class RedisStateService {
     private String versionKey(String key) {
         return "transform:version:" + key;
     }
+
+    public void putJsonInHash(String hashKey, int fieldId, String jsonValue) {
+        stringRedisTemplate.opsForHash().put(hashKey, String.valueOf(fieldId), jsonValue);
+    }
+
+    public long getLongValue(String key) {
+        String value = stringRedisTemplate.opsForValue().get(key);
+        return value == null ? 0L : Long.parseLong(value);
+    }
+
+    public void setLongValue(String key, long value) {
+        stringRedisTemplate.opsForValue().set(key, String.valueOf(value));
+    }
+
+    public double getDoubleValue(String key) {
+        String value = stringRedisTemplate.opsForValue().get(key);
+        return value == null ? 0.0 : Double.parseDouble(value);
+    }
+
+    public void setDoubleValue(String key, double value) {
+        stringRedisTemplate.opsForValue().set(key, String.valueOf(value));
+    }
 }
