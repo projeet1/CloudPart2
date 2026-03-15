@@ -35,14 +35,6 @@ public class AcpController {
         return ResponseEntity.ok(messages);
     }
 
-    @PutMapping("/messages/kafka/{writeTopic}/{messageCount}")
-    public ResponseEntity<Void> writeMessagesToKafka(
-            @PathVariable String writeTopic,
-            @PathVariable int messageCount) {
-        kafkaService.sendCounterMessages(writeTopic, messageCount);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/messages/sorted/rabbitmq/{queueName}/{messagesToConsider}")
     public ResponseEntity<List<SortedMessage>> readSortedMessagesFromRabbitMq(
             @PathVariable String queueName,
@@ -51,4 +43,23 @@ public class AcpController {
         List<SortedMessage> messages = rabbitMqService.readAndSortMessages(queueName, messagesToConsider);
         return ResponseEntity.ok(messages);
     }
+
+    @PutMapping("/messages/kafka/{writeTopic}/{messageCount}")
+    public ResponseEntity<Void> writeMessagesToKafka(
+            @PathVariable String writeTopic,
+            @PathVariable int messageCount) {
+        kafkaService.sendCounterMessages(writeTopic, messageCount);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/messages/kafka/{readTopic}/{timeoutInMsec}")
+    public ResponseEntity<List<String>> readMessagesFromKafka(
+            @PathVariable String readTopic,
+            @PathVariable long timeoutInMsec) {
+
+        List<String> messages = kafkaService.readMessagesForDuration(readTopic, timeoutInMsec);
+        return ResponseEntity.ok(messages);
+    }
+
+
 }
