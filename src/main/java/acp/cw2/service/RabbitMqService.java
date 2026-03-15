@@ -37,6 +37,10 @@ public class RabbitMqService {
         amqpAdmin.declareQueue(new Queue(queueName, true));
     }
 
+    public void ensureQueueForExternalUse(String queueName) {
+        ensureQueueExists(queueName);
+    }
+
     public void sendCounterMessages(String queueName, int messageCount) {
         ensureQueueExists(queueName);
 
